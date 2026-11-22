@@ -61,7 +61,7 @@ jobs:
                   minSdk = 24
                   targetSdk = 34
                   versionCode = 1
-                  versionName = "1.0"
+                  versionName = "2.0"
               }
 
               compileOptions {
@@ -100,8 +100,8 @@ jobs:
 
               <application
                   android:allowBackup="true"
-                  android:label="MultiRate AI Calc"
-                  android:theme="@android:style/Theme.Material.Light.NoActionBar">
+                  android:label="MultiCalc Pro"
+                  android:theme="@android:style/Theme.Material.NoActionBar">
                   <activity
                       android:name=".MainActivity"
                       android:exported="true">
@@ -133,21 +133,24 @@ jobs:
           import androidx.activity.compose.setContent
           import androidx.activity.result.contract.ActivityResultContracts
           import androidx.compose.foundation.background
+          import androidx.compose.foundation.clickable
+          import androidx.compose.foundation.horizontalScroll
           import androidx.compose.foundation.layout.*
-          import androidx.compose.foundation.lazy.LazyColumn
-          import androidx.compose.foundation.lazy.items
+          import androidx.compose.foundation.rememberScrollState
+          import androidx.compose.foundation.shape.CircleShape
           import androidx.compose.foundation.shape.RoundedCornerShape
-          import androidx.compose.foundation.text.KeyboardOptions
           import androidx.compose.material.icons.Icons
           import androidx.compose.material.icons.filled.*
           import androidx.compose.material3.*
           import androidx.compose.runtime.*
           import androidx.compose.ui.Alignment
           import androidx.compose.ui.Modifier
+          import androidx.compose.ui.draw.clip
           import androidx.compose.ui.graphics.Color
           import androidx.compose.ui.platform.LocalContext
           import androidx.compose.ui.text.font.FontWeight
-          import androidx.compose.ui.text.input.KeyboardType
+          import androidx.compose.ui.text.style.TextAlign
+          import androidx.compose.ui.text.style.TextOverflow
           import androidx.compose.ui.unit.dp
           import androidx.compose.ui.unit.sp
           import androidx.core.content.ContextCompat
@@ -158,22 +161,17 @@ jobs:
           import org.json.JSONObject
           import java.net.HttpURLConnection
           import java.net.URL
-          import java.util.Locale
+          import java.text.DecimalFormat
           import java.util.UUID
 
-          data class CalcCardItem(
+          data class CalcTab(
               val id: String = UUID.randomUUID().toString(),
-              val title: String = "Client / Platform",
-              val usdAmount: String = "",
-              val bdtRate: String = "119.0",
-              val feePercent: String = "0"
+              val name: String,
+              val expression: String = "",
+              val result: String = "0"
           ) {
-              fun calculateNetBdt(): Double {
-                  val usd = usdAmount.toDoubleOrNull() ?: 0.0
-                  val rate = bdtRate.toDoubleOrNull() ?: 0.0
-                  val fee = feePercent.toDoubleOrNull() ?: 0.0
-                  val netUsd = usd - (usd * (fee / 100.0))
-                  return netUsd * rate
+              fun numericResult(): Double {
+                  return result.replace(",", "").toDoubleOrNull() ?: 0.0
               }
           }
 
@@ -181,46 +179,97 @@ jobs:
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
                   setContent {
-                      MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF1E3A8A))) {
-                          MultiCalcApp()
+                      MaterialTheme(colorScheme = darkColorScheme()) {
+                          StandardMultiCalcApp()
                       }
                   }
               }
           }
 
-          @OptIn(ExperimentalMaterial3Api::class)
           @Composable
-          fun MultiCalcApp() {
+          fun StandardMultiCalcApp() {
               val context = LocalContext.current
-              val prefs = remember { context.getSharedPreferences("calc_prefs", Context.MODE_PRIVATE) }
+              val prefs = remember { context.getSharedPreferences("calc_pro_prefs", Context.MODE_PRIVATE) }
               val coroutineScope = rememberCoroutineScope()
 
               var apiKey by remember { mutableStateOf(prefs.getString("gemini_api_key", "") ?: "") }
               var showSettings by remember { mutableStateOf(false) }
+              var renameTabId by remember { mutableStateOf<String?>(null) }
+              var renameText by remember { mutableStateOf("") }
               var isListening by remember { mutableStateOf(false) }
-              var isProcessingAi by remember { mutableStateOf(false) }
-              var statusText by remember { mutableStateOf("") }
+              var isAiThinking by remember { mutableStateOf(false) }
 
-              var cards by remember {
+              var tabs by remember {
                   mutableStateOf(
                       listOf(
-                          CalcCardItem(title = "Payoneer", usdAmount = "100", bdtRate = "118.5", feePercent = "2"),
-                          CalcCardItem(title = "Stripe", usdAmount = "50", bdtRate = "117.0", feePercent = "3")
+                          CalcTab(name = "Calc 1"),
+                          CalcTab(name = "Calc 2")
                       )
                   )
               }
+              var activeTabIndex by remember { mutableIntStateOf(0) }
+              val safeIndex = activeTabIndex.coerceIn(0, (tabs.size - 1).coerceAtLeast(0))
+              val currentTab = tabs[safeIndex]
 
-              val grandTotal = cards.sumOf { it.calculateNetBdt() }
+              val allTabsTotal = tabs.sumOf { it.numericResult() }
+              val formatter = remember { DecimalFormat("#,##0.####") }
+
+              fun updateCurrentTab(newExpr: String, autoEval: Boolean = true) {
+                  val evaluated = if (autoEval) evaluateExpression(newExpr) else currentTab.result
+                  tabs = tabs.mapIndexed { index, tab ->
+                      if (index == safeIndex) {
+                          tab.copy(expression = newExpr, result = evaluated ?: tab.result)
+                      } else tab
+                  }
+              }
+
+              fun onButtonPress(label: String) {
+                  val expr = currentTab.expression
+                  when (label) {
+                      "AC" -> {
+                          tabs = tabs.mapIndexed { i, t -> if (i == safeIndex) t.copy(expression = "", result = "0") else t }
+                      }
+                      "⌫" -> {
+                          if (expr.isNotEmpty()) {
+                              val next = expr.dropLast(1)
+                              if (next.isEmpty()) {
+                                  tabs = tabs.mapIndexed { i, t -> if (i == safeIndex) t.copy(expression = "", result = "0") else t }
+                              } else {
+                                  updateCurrentTab(next)
+                              }
+                          }
+                      }
+                      "=" -> {
+                          val res = evaluateExpression(expr)
+                          if (res != null) {
+                              tabs = tabs.mapIndexed { i, t -> if (i == safeIndex) t.copy(expression = res, result = res) else t }
+                          }
+                      }
+                      "+", "-", "×", "÷", "%" -> {
+                          if (expr.isEmpty() && currentTab.result != "0") {
+                              updateCurrentTab(currentTab.result + label, autoEval = false)
+                          } else if (expr.isNotEmpty()) {
+                              val last = expr.last()
+                              val next = if (last in listOf('+', '-', '×', '÷')) expr.dropLast(1) + label else expr + label
+                              updateCurrentTab(next, autoEval = label == "%")
+                          }
+                      }
+                      else -> {
+                          val next = if (expr == "0" && label != ".") label else expr + label
+                          updateCurrentTab(next)
+                      }
+                  }
+              }
 
               val permissionLauncher = rememberLauncherForActivityResult(
                   ActivityResultContracts.RequestPermission()
               ) { granted ->
-                  if (!granted) Toast.makeText(context, "Mic permission required", Toast.LENGTH_SHORT).show()
+                  if (!granted) Toast.makeText(context, "Mic permission needed", Toast.LENGTH_SHORT).show()
               }
 
-              fun startVoiceRecognition() {
+              fun triggerVoiceCalc() {
                   if (apiKey.isBlank()) {
-                      Toast.makeText(context, "আগে সেটিংস থেকে Gemini API Key বসান!", Toast.LENGTH_LONG).show()
+                      Toast.makeText(context, "সেটিংস থেকে ফ্রি Gemini API Key দিন", Toast.LENGTH_LONG).show()
                       showSettings = true
                       return
                   }
@@ -234,34 +283,25 @@ jobs:
                       putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                       putExtra(RecognizerIntent.EXTRA_LANGUAGE, "bn-BD")
                   }
-
                   recognizer.setRecognitionListener(object : RecognitionListener {
-                      override fun onReadyForSpeech(params: Bundle?) {
-                          isListening = true
-                          statusText = "শুনছি... বলুন (যেমন: রাকিব পেওনিয়ার ১০০ ডলার ১১৯ রেটে)"
-                      }
+                      override fun onReadyForSpeech(params: Bundle?) { isListening = true }
                       override fun onResults(results: Bundle?) {
                           isListening = false
-                          val spokenText = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull() ?: ""
-                          if (spokenText.isNotBlank()) {
-                              statusText = "বুঝছি: \"$spokenText\""
-                              isProcessingAi = true
+                          val spoken = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull() ?: ""
+                          if (spoken.isNotBlank()) {
+                              isAiThinking = true
                               coroutineScope.launch {
-                                  val parsedCards = parseCommandWithGemini(apiKey, spokenText)
-                                  isProcessingAi = false
-                                  if (parsedCards.isNotEmpty()) {
-                                      cards = cards + parsedCards
-                                      statusText = "নতুন ${parsedCards.size}টি হিসাব যোগ হয়েছে!"
+                                  val mathExpr = convertVoiceToMath(apiKey, spoken)
+                                  isAiThinking = false
+                                  if (mathExpr.isNotBlank()) {
+                                      updateCurrentTab(mathExpr)
                                   } else {
-                                      statusText = "দুঃখিত, AI হিসাবটি বুঝতে পারেনি। আবার চেষ্টা করুন।"
+                                      Toast.makeText(context, "বুঝতে পারিনি: $spoken", Toast.LENGTH_SHORT).show()
                                   }
                               }
                           }
                       }
-                      override fun onError(error: Int) {
-                          isListening = false
-                          statusText = "ভয়েস এরর ($error)। আবার চেষ্টা করুন।"
-                      }
+                      override fun onError(error: Int) { isListening = false }
                       override fun onBeginningOfSpeech() {}
                       override fun onRmsChanged(rmsdB: Float) {}
                       override fun onBufferReceived(buffer: ByteArray?) {}
@@ -272,153 +312,209 @@ jobs:
                   recognizer.startListening(intent)
               }
 
-              Scaffold(
-                  topBar = {
-                      TopAppBar(
-                          title = { Text("MultiRate AI Calc", fontWeight = FontWeight.Bold) },
-                          actions = {
-                              IconButton(onClick = {
-                                  val summary = buildString {
-                                      appendLine("📊 *হিসাবের সারসংক্ষেপ:*")
-                                      cards.forEachIndexed { idx, c ->
-                                          appendLine("${idx + 1}. ${c.title}: $${c.usdAmount} @ ${c.bdtRate}৳ (Fee: ${c.feePercent}%) = ${String.format(Locale.US, "%.2f", c.calculateNetBdt())}৳")
-                                      }
-                                      appendLine("----------------------")
-                                      appendLine("💰 *মোট (Grand Total): ${String.format(Locale.US, "%.2f", grandTotal)} BDT*")
-                                  }
-                                  val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                  clipboard.setPrimaryClip(ClipData.newPlainText("Summary", summary))
-                                  Toast.makeText(context, "রিসিপ্ট কপি হয়েছে! WhatsApp-এ পেস্ট করুন", Toast.LENGTH_SHORT).show()
-                              }) {
-                                  Icon(Icons.Default.ContentCopy, contentDescription = "Copy Receipt")
-                              }
-                              IconButton(onClick = { showSettings = true }) {
-                                  Icon(Icons.Default.Settings, contentDescription = "API Settings")
+              Column(
+                  modifier = Modifier
+                      .fillMaxSize()
+                      .background(Color(0xFF0D0F14))
+                      .statusBarsPadding()
+                      .navigationBarsPadding()
+              ) {
+                  // Top Bar: Combined Total & Actions
+                  Row(
+                      modifier = Modifier
+                          .fillMaxWidth()
+                          .padding(horizontal = 16.dp, vertical = 10.dp),
+                      verticalAlignment = Alignment.CenterVertically,
+                      horizontalArrangement = Arrangement.SpaceBetween
+                  ) {
+                      Column(
+                          modifier = Modifier.clickable {
+                              val clip = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                              clip.setPrimaryClip(ClipData.newPlainText("Total", formatter.format(allTabsTotal)))
+                              Toast.makeText(context, "Grand Total কপি হয়েছে!", Toast.LENGTH_SHORT).show()
+                          }
+                      ) {
+                          Text("ALL TABS TOTAL", fontSize = 10.sp, color = Color(0xFF8E95A5), letterSpacing = 1.sp)
+                          Text(
+                              text = formatter.format(allTabsTotal),
+                              fontSize = 20.sp,
+                              fontWeight = FontWeight.Bold,
+                              color = Color(0xFF4ADE80)
+                          )
+                      }
+
+                      Row(verticalAlignment = Alignment.CenterVertically) {
+                          IconButton(onClick = { triggerVoiceCalc() }) {
+                              if (isAiThinking) {
+                                  CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color(0xFF60A5FA))
+                              } else {
+                                  Icon(
+                                      Icons.Default.Mic,
+                                      contentDescription = "Voice",
+                                      tint = if (isListening) Color(0xFFEF4444) else Color(0xFF60A5FA)
+                                  )
                               }
                           }
-                      )
-                  },
-                  bottomBar = {
-                      Surface(shadowElevation = 8.dp, color = Color(0xFFF8FAFC)) {
-                          Column(modifier = Modifier.padding(16.dp)) {
-                              if (statusText.isNotEmpty()) {
-                                  Text(statusText, fontSize = 12.sp, color = Color(0xFF475569), modifier = Modifier.padding(bottom = 6.dp))
-                              }
-                              Row(
-                                  modifier = Modifier.fillMaxWidth(),
-                                  verticalAlignment = Alignment.CenterVertically,
-                                  horizontalArrangement = Arrangement.SpaceBetween
-                              ) {
-                                  Column {
-                                      Text("সর্বমোট (Grand Total)", fontSize = 12.sp, color = Color.Gray)
-                                      Text(
-                                          text = "৳ ${String.format(Locale.US, "%,.2f", grandTotal)}",
-                                          fontSize = 24.sp,
-                                          fontWeight = FontWeight.ExtraBold,
-                                          color = Color(0xFF0F172A)
-                                      )
-                                  }
-                                  Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                      FilledTonalButton(onClick = {
-                                          cards = cards + CalcCardItem(title = "New Platform")
-                                      }) {
-                                          Icon(Icons.Default.Add, contentDescription = null)
-                                          Text("কার্ড")
-                                      }
-                                      Button(
-                                          onClick = { startVoiceRecognition() },
-                                          colors = ButtonDefaults.buttonColors(
-                                              containerColor = if (isListening) Color.Red else Color(0xFF1E3A8A)
-                                          )
-                                      ) {
-                                          if (isProcessingAi) {
-                                              CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
-                                          } else {
-                                              Icon(Icons.Default.Mic, contentDescription = "Voice")
-                                          }
-                                          Spacer(Modifier.width(4.dp))
-                                          Text(if (isListening) "Listening..." else "AI Voice")
-                                      }
-                                  }
-                              }
+                          IconButton(onClick = { showSettings = true }) {
+                              Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color(0xFF9CA3AF))
                           }
                       }
                   }
-              ) { padding ->
-                  Column(modifier = Modifier.padding(padding).fillMaxSize().background(Color(0xFFF1F5F9))) {
-                      Row(
-                          modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                          horizontalArrangement = Arrangement.spacedBy(8.dp)
-                      ) {
-                          AssistChip(onClick = { cards = cards + CalcCardItem(title = "Payoneer", bdtRate = "118.5", feePercent = "2") }, label = { Text("+ Payoneer") })
-                          AssistChip(onClick = { cards = cards + CalcCardItem(title = "Stripe", bdtRate = "117.0", feePercent = "2.9") }, label = { Text("+ Stripe") })
-                          AssistChip(onClick = { cards = cards + CalcCardItem(title = "Wise", bdtRate = "119.5", feePercent = "1") }, label = { Text("+ Wise") })
+
+                  // Multi-Calculator Tabs Row
+                  Row(
+                      modifier = Modifier
+                          .fillMaxWidth()
+                          .padding(horizontal = 12.dp)
+                          .horizontalScroll(rememberScrollState()),
+                      horizontalArrangement = Arrangement.spacedBy(8.dp),
+                      verticalAlignment = Alignment.CenterVertically
+                  ) {
+                      tabs.forEachIndexed { index, tab ->
+                          val selected = index == safeIndex
+                          Surface(
+                              shape = RoundedCornerShape(14.dp),
+                              color = if (selected) Color(0xFF2563EB) else Color(0xFF1A1E29),
+                              modifier = Modifier.clickable { activeTabIndex = index }
+                          ) {
+                              Row(
+                                  modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                  verticalAlignment = Alignment.CenterVertically,
+                                  horizontalArrangement = Arrangement.spacedBy(6.dp)
+                              ) {
+                                  Column(modifier = Modifier.clickable {
+                                      if (selected) {
+                                          renameTabId = tab.id
+                                          renameText = tab.name
+                                      } else {
+                                          activeTabIndex = index
+                                      }
+                                  }) {
+                                      Text(
+                                          text = tab.name,
+                                          fontSize = 11.sp,
+                                          color = if (selected) Color.White.copy(alpha = 0.85f) else Color(0xFF9CA3AF),
+                                          maxLines = 1,
+                                          overflow = TextOverflow.Ellipsis
+                                      )
+                                      Text(
+                                          text = tab.result,
+                                          fontSize = 14.sp,
+                                          fontWeight = FontWeight.Bold,
+                                          color = Color.White,
+                                          maxLines = 1
+                                      )
+                                  }
+                                  if (tabs.size > 1) {
+                                      Icon(
+                                          Icons.Default.Close,
+                                          contentDescription = "Close Tab",
+                                          tint = Color.White.copy(alpha = 0.6f),
+                                          modifier = Modifier
+                                              .size(15.dp)
+                                              .clickable {
+                                                  tabs = tabs.filterIndexed { i, _ -> i != index }
+                                                  if (activeTabIndex >= tabs.size) activeTabIndex = tabs.size - 1
+                                              }
+                                      )
+                                  }
+                              }
+                          }
                       }
 
-                      LazyColumn(
-                          modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                          verticalArrangement = Arrangement.spacedBy(10.dp),
-                          contentPadding = PaddingValues(bottom = 24.dp)
+                      // Add New Tab Button
+                      FilledIconButton(
+                          onClick = {
+                              tabs = tabs + CalcTab(name = "Calc ${tabs.size + 1}")
+                              activeTabIndex = tabs.size - 1
+                          },
+                          colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFF1A1E29)),
+                          modifier = Modifier.size(40.dp)
                       ) {
-                          items(cards, key = { it.id }) { card ->
-                              Card(
-                                  shape = RoundedCornerShape(12.dp),
-                                  colors = CardDefaults.cardColors(containerColor = Color.White),
-                                  elevation = CardDefaults.cardElevation(2.dp)
-                              ) {
-                                  Column(modifier = Modifier.padding(12.dp)) {
-                                      Row(
-                                          modifier = Modifier.fillMaxWidth(),
-                                          horizontalArrangement = Arrangement.SpaceBetween,
-                                          verticalAlignment = Alignment.CenterVertically
-                                      ) {
-                                          OutlinedTextField(
-                                              value = card.title,
-                                              onValueChange = { newVal -> cards = cards.map { if (it.id == card.id) it.copy(title = newVal) else it } },
-                                              label = { Text("Student / Platform") },
-                                              modifier = Modifier.weight(1f),
-                                              singleLine = true
-                                          )
-                                          IconButton(onClick = { cards = cards.filterNot { it.id == card.id } }) {
-                                              Icon(Icons.Default.Delete, contentDescription = "Remove", tint = Color(0xFFDC2626))
-                                          }
-                                      }
-                                      Spacer(Modifier.height(8.dp))
-                                      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                          OutlinedTextField(
-                                              value = card.usdAmount,
-                                              onValueChange = { newVal -> cards = cards.map { if (it.id == card.id) it.copy(usdAmount = newVal) else it } },
-                                              label = { Text("USD ($)") },
-                                              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                              modifier = Modifier.weight(1f),
-                                              singleLine = true
-                                          )
-                                          OutlinedTextField(
-                                              value = card.bdtRate,
-                                              onValueChange = { newVal -> cards = cards.map { if (it.id == card.id) it.copy(bdtRate = newVal) else it } },
-                                              label = { Text("Rate (৳)") },
-                                              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                              modifier = Modifier.weight(1f),
-                                              singleLine = true
-                                          )
-                                          OutlinedTextField(
-                                              value = card.feePercent,
-                                              onValueChange = { newVal -> cards = cards.map { if (it.id == card.id) it.copy(feePercent = newVal) else it } },
-                                              label = { Text("Fee %") },
-                                              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                              modifier = Modifier.weight(0.8f),
-                                              singleLine = true
-                                          )
-                                      }
-                                      Spacer(Modifier.height(8.dp))
-                                      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                          Text(
-                                              text = "সাব-টোটাল: ৳ ${String.format(Locale.US, "%,.2f", card.calculateNetBdt())}",
-                                              fontWeight = FontWeight.Bold,
-                                              color = Color(0xFF1E3A8A),
-                                              fontSize = 15.sp
-                                          )
-                                      }
+                          Icon(Icons.Default.Add, contentDescription = "New Calc", tint = Color.White)
+                      }
+                  }
+
+                  // Main Calculator Display Area
+                  Column(
+                      modifier = Modifier
+                          .fillMaxWidth()
+                          .weight(0.36f)
+                          .padding(horizontal = 20.dp, vertical = 12.dp),
+                      verticalArrangement = Arrangement.Bottom,
+                      horizontalAlignment = Alignment.End
+                  ) {
+                      Text(
+                          text = if (isListening) "Listening..." else currentTab.expression,
+                          fontSize = 24.sp,
+                          color = if (isListening) Color(0xFF60A5FA) else Color(0xFF9CA3AF),
+                          textAlign = TextAlign.End,
+                          maxLines = 2,
+                          overflow = TextOverflow.Ellipsis
+                      )
+                      Spacer(Modifier.height(8.dp))
+                      Text(
+                          text = currentTab.result,
+                          fontSize = 48.sp,
+                          fontWeight = FontWeight.Bold,
+                          color = Color.White,
+                          textAlign = TextAlign.End,
+                          maxLines = 1,
+                          overflow = TextOverflow.Ellipsis
+                      )
+                  }
+
+                  // Standard Calculator Keypad
+                  val buttonRows = listOf(
+                      listOf("AC", "⌫", "%", "÷"),
+                      listOf("7", "8", "9", "×"),
+                      listOf("4", "5", "6", "-"),
+                      listOf("1", "2", "3", "+"),
+                      listOf("00", "0", ".", "=")
+                  )
+
+                  Column(
+                      modifier = Modifier
+                          .fillMaxWidth()
+                          .weight(0.64f)
+                          .padding(horizontal = 14.dp, vertical = 10.dp),
+                      verticalArrangement = Arrangement.spacedBy(10.dp)
+                  ) {
+                      buttonRows.forEach { row ->
+                          Row(
+                              modifier = Modifier
+                                  .fillMaxWidth()
+                                  .weight(1f),
+                              horizontalArrangement = Arrangement.spacedBy(10.dp)
+                          ) {
+                              row.forEach { btn ->
+                                  val bgColor = when (btn) {
+                                      "=" -> Color(0xFF2563EB)
+                                      "÷", "×", "-", "+" -> Color(0xFF1E293B)
+                                      "AC", "⌫", "%" -> Color(0xFF272B38)
+                                      else -> Color(0xFF161922)
+                                  }
+                                  val textColor = when (btn) {
+                                      "AC" -> Color(0xFFF87171)
+                                      "÷", "×", "-", "+", "%" -> Color(0xFF60A5FA)
+                                      else -> Color.White
+                                  }
+
+                                  Box(
+                                      contentAlignment = Alignment.Center,
+                                      modifier = Modifier
+                                          .weight(1f)
+                                          .fillMaxHeight()
+                                          .clip(RoundedCornerShape(22.dp))
+                                          .background(bgColor)
+                                          .clickable { onButtonPress(btn) }
+                                  ) {
+                                      Text(
+                                          text = btn,
+                                          fontSize = 24.sp,
+                                          fontWeight = FontWeight.SemiBold,
+                                          color = textColor
+                                      )
                                   }
                               }
                           }
@@ -426,13 +522,36 @@ jobs:
                   }
               }
 
+              // Rename Tab Dialog
+              if (renameTabId != null) {
+                  AlertDialog(
+                      onDismissRequest = { renameTabId = null },
+                      title = { Text("Tab Name") },
+                      text = {
+                          OutlinedTextField(
+                              value = renameText,
+                              onValueChange = { renameText = it },
+                              placeholder = { Text("e.g. Payoneer / Student") },
+                              singleLine = true
+                          )
+                      },
+                      confirmButton = {
+                          Button(onClick = {
+                              tabs = tabs.map { if (it.id == renameTabId) it.copy(name = renameText.ifBlank { it.name }) else it }
+                              renameTabId = null
+                          }) { Text("Save") }
+                      }
+                  )
+              }
+
+              // Gemini API Key Dialog
               if (showSettings) {
                   AlertDialog(
                       onDismissRequest = { showSettings = false },
-                      title = { Text("Gemini API Key সেটআপ") },
+                      title = { Text("Gemini API Key (Optional)") },
                       text = {
                           Column {
-                              Text("Google AI Studio থেকে পাওয়া ফ্রি API Key এখানে পেস্ট করুন:", fontSize = 13.sp)
+                              Text("AI Voice ব্যবহার করতে চাইলে ফ্রি API Key দিন:", fontSize = 13.sp)
                               Spacer(Modifier.height(8.dp))
                               OutlinedTextField(
                                   value = apiKey,
@@ -446,14 +565,79 @@ jobs:
                           Button(onClick = {
                               prefs.edit().putString("gemini_api_key", apiKey.trim()).apply()
                               showSettings = false
-                              Toast.makeText(context, "API Key সেভ হয়েছে!", Toast.LENGTH_SHORT).show()
+                              Toast.makeText(context, "Saved!", Toast.LENGTH_SHORT).show()
                           }) { Text("Save") }
                       }
                   )
               }
           }
 
-          suspend fun parseCommandWithGemini(apiKey: String, command: String): List<CalcCardItem> = withContext(Dispatchers.IO) {
+          fun evaluateExpression(raw: String): String? {
+              if (raw.isBlank()) return "0"
+              return try {
+                  val clean = raw
+                      .replace(",", "")
+                      .replace("×", "*")
+                      .replace("÷", "/")
+                      .replace("%", "/100.0")
+                      .trimEnd('+', '-', '*', '/')
+                  if (clean.isBlank()) return "0"
+
+                  val result = object : Any() {
+                      var pos = -1
+                      var ch = 0
+                      fun nextChar() { ch = if (++pos < clean.length) clean[pos].code else -1 }
+                      fun eat(charToEat: Int): Boolean {
+                          while (ch == ' '.code) nextChar()
+                          if (ch == charToEat) { nextChar(); return true }
+                          return false
+                      }
+                      fun parse(): Double {
+                          nextChar()
+                          val x = parseExpression()
+                          if (pos < clean.length) throw RuntimeException("Unexpected")
+                          return x
+                      }
+                      fun parseExpression(): Double {
+                          var x = parseTerm()
+                          while (true) {
+                              if (eat('+'.code)) x += parseTerm()
+                              else if (eat('-'.code)) x -= parseTerm()
+                              else return x
+                          }
+                      }
+                      fun parseTerm(): Double {
+                          var x = parseFactor()
+                          while (true) {
+                              if (eat('*'.code)) x *= parseFactor()
+                              else if (eat('/'.code)) x /= parseFactor()
+                              else return x
+                          }
+                      }
+                      fun parseFactor(): Double {
+                          if (eat('+'.code)) return parseFactor()
+                          if (eat('-'.code)) return -parseFactor()
+                          var x: Double
+                          val startPos = pos
+                          if (eat('('.code)) {
+                              x = parseExpression()
+                              eat(')'.code)
+                          } else if ((ch >= '0'.code && ch <= '9'.code) || ch == '.'.code) {
+                              while ((ch >= '0'.code && ch <= '9'.code) || ch == '.'.code) nextChar()
+                              x = clean.substring(startPos, pos).toDouble()
+                          } else throw RuntimeException("Unexpected")
+                          return x
+                      }
+                  }.parse()
+
+                  if (result.isNaN() || result.isInfinite()) return null
+                  DecimalFormat("#,##0.####").format(result)
+              } catch (e: Exception) {
+                  null
+              }
+          }
+
+          suspend fun convertVoiceToMath(apiKey: String, spoken: String): String = withContext(Dispatchers.IO) {
               try {
                   val url = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey")
                   val conn = (url.openConnection() as HttpURLConnection).apply {
@@ -461,50 +645,25 @@ jobs:
                       setRequestProperty("Content-Type", "application/json")
                       doOutput = true
                   }
-
-                  val prompt = """
-                      Extract currency calculation items from this Bengali/English voice command: "$command"
-                      Return ONLY a valid JSON array of objects with keys: "title" (string, e.g. client/platform name), "usd" (number), "rate" (number, default 119 if not mentioned), "fee" (number, percentage fee, default 0 if not mentioned).
-                      Example output: [{"title":"Rakib - Payoneer","usd":100,"rate":119,"fee":2}]
-                      Do not include markdown formatting or extra text.
-                  """.trimIndent()
-
+                  val prompt = "Convert this Bengali/English math voice command into a pure math expression using only digits and +, -, ×, ÷, %. Example: '100 gun 119 biyog 2 percent' -> '100×119-2%'. Return ONLY the math expression, nothing else. Input: \"$spoken\""
                   val body = JSONObject().apply {
                       put("contents", JSONArray().put(JSONObject().apply {
                           put("parts", JSONArray().put(JSONObject().put("text", prompt)))
                       }))
                   }
-
                   conn.outputStream.use { it.write(body.toString().toByteArray()) }
-                  val responseText = conn.inputStream.bufferedReader().readText()
-                  val jsonResponse = JSONObject(responseText)
-                  val rawText = jsonResponse.getJSONArray("candidates")
+                  val response = JSONObject(conn.inputStream.bufferedReader().readText())
+                  response.getJSONArray("candidates")
                       .getJSONObject(0)
                       .getJSONObject("content")
                       .getJSONArray("parts")
                       .getJSONObject(0)
                       .getString("text")
-                      .replace("```json", "")
-                      .replace("```", "")
+                      .replace("*", "×")
+                      .replace("/", "÷")
                       .trim()
-
-                  val array = JSONArray(rawText)
-                  val result = mutableListOf<CalcCardItem>()
-                  for (i in 0 until array.length()) {
-                      val obj = array.getJSONObject(i)
-                      result.add(
-                          CalcCardItem(
-                              title = obj.optString("title", "AI Entry"),
-                              usdAmount = obj.optDouble("usd", 0.0).toString(),
-                              bdtRate = obj.optDouble("rate", 119.0).toString(),
-                              feePercent = obj.optDouble("fee", 0.0).toString()
-                          )
-                      )
-                  }
-                  result
               } catch (e: Exception) {
-                  e.printStackTrace()
-                  emptyList()
+                  ""
               }
           }
           EOF
@@ -526,5 +685,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: MultiRate-AI-Calculator
+          name: MultiCalc-Pro-v2
           path: app/build/outputs/apk/debug/app-debug.apk
