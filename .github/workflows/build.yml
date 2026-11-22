@@ -1,0 +1,518 @@
+name: Build MultiRate AI Calc APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Complete Android Project
+        run: |
+          mkdir -p app/src/main/java/com/aktech/multicalc
+
+          cat << 'EOF' > settings.gradle.kts
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "MultiRateCalc"
+          include(":app")
+          EOF
+
+          cat << 'EOF' > build.gradle.kts
+          plugins {
+              id("com.android.application") version "8.2.2" apply false
+              id("org.jetbrains.kotlin.android") version "1.9.22" apply false
+          }
+          EOF
+
+          cat << 'EOF' > app/build.gradle.kts
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
+
+          android {
+              namespace = "com.aktech.multicalc"
+              compileSdk = 34
+
+              defaultConfig {
+                  applicationId = "com.aktech.multicalc"
+                  minSdk = 24
+                  targetSdk = 34
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+
+              buildFeatures {
+                  compose = true
+              }
+              composeOptions {
+                  kotlinCompilerExtensionVersion = "1.5.8"
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+          }
+
+          dependencies {
+              implementation("androidx.core:core-ktx:1.12.0")
+              implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+              implementation("androidx.activity:activity-compose:1.8.2")
+              implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+              implementation("androidx.compose.ui:ui")
+              implementation("androidx.compose.material3:material3")
+              implementation("androidx.compose.material:material-icons-extended")
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+              <application
+                  android:allowBackup="true"
+                  android:label="MultiRate AI Calc"
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/aktech/multicalc/MainActivity.kt
+          package com.aktech.multicalc
+
+          import android.Manifest
+          import android.content.ClipData
+          import android.content.ClipboardManager
+          import android.content.Context
+          import android.content.Intent
+          import android.content.pm.PackageManager
+          import android.os.Bundle
+          import android.speech.RecognitionListener
+          import android.speech.RecognizerIntent
+          import android.speech.SpeechRecognizer
+          import android.widget.Toast
+          import androidx.activity.ComponentActivity
+          import androidx.activity.compose.rememberLauncherForActivityResult
+          import androidx.activity.compose.setContent
+          import androidx.activity.result.contract.ActivityResultContracts
+          import androidx.compose.foundation.background
+          import androidx.compose.foundation.layout.*
+          import androidx.compose.foundation.lazy.LazyColumn
+          import androidx.compose.foundation.lazy.items
+          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.foundation.text.KeyboardOptions
+          import androidx.compose.material.icons.Icons
+          import androidx.compose.material.icons.filled.*
+          import androidx.compose.material3.*
+          import androidx.compose.runtime.*
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.graphics.Color
+          import androidx.compose.ui.platform.LocalContext
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.text.input.KeyboardType
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+          import androidx.core.content.ContextCompat
+          import kotlinx.coroutines.Dispatchers
+          import kotlinx.coroutines.launch
+          import kotlinx.coroutines.withContext
+          import org.json.JSONArray
+          import org.json.JSONObject
+          import java.net.HttpURLConnection
+          import java.net.URL
+          import java.util.Locale
+          import java.util.UUID
+
+          data class CalcCardItem(
+              val id: String = UUID.randomUUID().toString(),
+              val title: String = "Client / Platform",
+              val usdAmount: String = "",
+              val bdtRate: String = "119.0",
+              val feePercent: String = "0"
+          ) {
+              fun calculateNetBdt(): Double {
+                  val usd = usdAmount.toDoubleOrNull() ?: 0.0
+                  val rate = bdtRate.toDoubleOrNull() ?: 0.0
+                  val fee = feePercent.toDoubleOrNull() ?: 0.0
+                  val netUsd = usd - (usd * (fee / 100.0))
+                  return netUsd * rate
+              }
+          }
+
+          class MainActivity : ComponentActivity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  setContent {
+                      MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF1E3A8A))) {
+                          MultiCalcApp()
+                      }
+                  }
+              }
+          }
+
+          @OptIn(ExperimentalMaterial3Api::class)
+          @Composable
+          fun MultiCalcApp() {
+              val context = LocalContext.current
+              val prefs = remember { context.getSharedPreferences("calc_prefs", Context.MODE_PRIVATE) }
+              val coroutineScope = rememberCoroutineScope()
+
+              var apiKey by remember { mutableStateOf(prefs.getString("gemini_api_key", "") ?: "") }
+              var showSettings by remember { mutableStateOf(false) }
+              var isListening by remember { mutableStateOf(false) }
+              var isProcessingAi by remember { mutableStateOf(false) }
+              var statusText by remember { mutableStateOf("") }
+
+              var cards by remember {
+                  mutableStateOf(
+                      listOf(
+                          CalcCardItem(title = "Payoneer", usdAmount = "100", bdtRate = "118.5", feePercent = "2"),
+                          CalcCardItem(title = "Stripe", usdAmount = "50", bdtRate = "117.0", feePercent = "3")
+                      )
+                  )
+              }
+
+              val grandTotal = cards.sumOf { it.calculateNetBdt() }
+
+              val permissionLauncher = rememberLauncherForActivityResult(
+                  ActivityResultContracts.RequestPermission()
+              ) { granted ->
+                  if (!granted) Toast.makeText(context, "Mic permission required", Toast.LENGTH_SHORT).show()
+              }
+
+              fun startVoiceRecognition() {
+                  if (apiKey.isBlank()) {
+                      Toast.makeText(context, "আগে সেটিংস থেকে Gemini API Key বসান!", Toast.LENGTH_LONG).show()
+                      showSettings = true
+                      return
+                  }
+                  if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                      permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                      return
+                  }
+
+                  val recognizer = SpeechRecognizer.createSpeechRecognizer(context)
+                  val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                      putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                      putExtra(RecognizerIntent.EXTRA_LANGUAGE, "bn-BD")
+                  }
+
+                  recognizer.setRecognitionListener(object : RecognitionListener {
+                      override fun onReadyForSpeech(params: Bundle?) {
+                          isListening = true
+                          statusText = "শুনছি... বলুন (যেমন: রাকিব পেওনিয়ার ১০০ ডলার ১১৯ রেটে)"
+                      }
+                      override fun onResults(results: Bundle?) {
+                          isListening = false
+                          val spokenText = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull() ?: ""
+                          if (spokenText.isNotBlank()) {
+                              statusText = "বুঝছি: \"$spokenText\""
+                              isProcessingAi = true
+                              coroutineScope.launch {
+                                  val parsedCards = parseCommandWithGemini(apiKey, spokenText)
+                                  isProcessingAi = false
+                                  if (parsedCards.isNotEmpty()) {
+                                      cards = cards + parsedCards
+                                      statusText = "নতুন ${parsedCards.size}টি হিসাব যোগ হয়েছে!"
+                                  } else {
+                                      statusText = "দুঃখিত, AI হিসাবটি বুঝতে পারেনি। আবার চেষ্টা করুন।"
+                                  }
+                              }
+                          }
+                      }
+                      override fun onError(error: Int) {
+                          isListening = false
+                          statusText = "ভয়েস এরর ($error)। আবার চেষ্টা করুন।"
+                      }
+                      override fun onBeginningOfSpeech() {}
+                      override fun onRmsChanged(rmsdB: Float) {}
+                      override fun onBufferReceived(buffer: ByteArray?) {}
+                      override fun onEndOfSpeech() { isListening = false }
+                      override fun onPartialResults(partialResults: Bundle?) {}
+                      override fun onEvent(eventType: Int, params: Bundle?) {}
+                  })
+                  recognizer.startListening(intent)
+              }
+
+              Scaffold(
+                  topBar = {
+                      TopAppBar(
+                          title = { Text("MultiRate AI Calc", fontWeight = FontWeight.Bold) },
+                          actions = {
+                              IconButton(onClick = {
+                                  val summary = buildString {
+                                      appendLine("📊 *হিসাবের সারসংক্ষেপ:*")
+                                      cards.forEachIndexed { idx, c ->
+                                          appendLine("${idx + 1}. ${c.title}: $${c.usdAmount} @ ${c.bdtRate}৳ (Fee: ${c.feePercent}%) = ${String.format(Locale.US, "%.2f", c.calculateNetBdt())}৳")
+                                      }
+                                      appendLine("----------------------")
+                                      appendLine("💰 *মোট (Grand Total): ${String.format(Locale.US, "%.2f", grandTotal)} BDT*")
+                                  }
+                                  val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                  clipboard.setPrimaryClip(ClipData.newPlainText("Summary", summary))
+                                  Toast.makeText(context, "রিসিপ্ট কপি হয়েছে! WhatsApp-এ পেস্ট করুন", Toast.LENGTH_SHORT).show()
+                              }) {
+                                  Icon(Icons.Default.ContentCopy, contentDescription = "Copy Receipt")
+                              }
+                              IconButton(onClick = { showSettings = true }) {
+                                  Icon(Icons.Default.Settings, contentDescription = "API Settings")
+                              }
+                          }
+                      )
+                  },
+                  bottomBar = {
+                      Surface(shadowElevation = 8.dp, color = Color(0xFFF8FAFC)) {
+                          Column(modifier = Modifier.padding(16.dp)) {
+                              if (statusText.isNotEmpty()) {
+                                  Text(statusText, fontSize = 12.sp, color = Color(0xFF475569), modifier = Modifier.padding(bottom = 6.dp))
+                              }
+                              Row(
+                                  modifier = Modifier.fillMaxWidth(),
+                                  verticalAlignment = Alignment.CenterVertically,
+                                  horizontalArrangement = Arrangement.SpaceBetween
+                              ) {
+                                  Column {
+                                      Text("সর্বমোট (Grand Total)", fontSize = 12.sp, color = Color.Gray)
+                                      Text(
+                                          text = "৳ ${String.format(Locale.US, "%,.2f", grandTotal)}",
+                                          fontSize = 24.sp,
+                                          fontWeight = FontWeight.ExtraBold,
+                                          color = Color(0xFF0F172A)
+                                      )
+                                  }
+                                  Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                      FilledTonalButton(onClick = {
+                                          cards = cards + CalcCardItem(title = "New Platform")
+                                      }) {
+                                          Icon(Icons.Default.Add, contentDescription = null)
+                                          Text("কার্ড")
+                                      }
+                                      Button(
+                                          onClick = { startVoiceRecognition() },
+                                          colors = ButtonDefaults.buttonColors(
+                                              containerColor = if (isListening) Color.Red else Color(0xFF1E3A8A)
+                                          )
+                                      ) {
+                                          if (isProcessingAi) {
+                                              CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                                          } else {
+                                              Icon(Icons.Default.Mic, contentDescription = "Voice")
+                                          }
+                                          Spacer(Modifier.width(4.dp))
+                                          Text(if (isListening) "Listening..." else "AI Voice")
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              ) { padding ->
+                  Column(modifier = Modifier.padding(padding).fillMaxSize().background(Color(0xFFF1F5F9))) {
+                      Row(
+                          modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                          horizontalArrangement = Arrangement.spacedBy(8.dp)
+                      ) {
+                          AssistChip(onClick = { cards = cards + CalcCardItem(title = "Payoneer", bdtRate = "118.5", feePercent = "2") }, label = { Text("+ Payoneer") })
+                          AssistChip(onClick = { cards = cards + CalcCardItem(title = "Stripe", bdtRate = "117.0", feePercent = "2.9") }, label = { Text("+ Stripe") })
+                          AssistChip(onClick = { cards = cards + CalcCardItem(title = "Wise", bdtRate = "119.5", feePercent = "1") }, label = { Text("+ Wise") })
+                      }
+
+                      LazyColumn(
+                          modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                          verticalArrangement = Arrangement.spacedBy(10.dp),
+                          contentPadding = PaddingValues(bottom = 24.dp)
+                      ) {
+                          items(cards, key = { it.id }) { card ->
+                              Card(
+                                  shape = RoundedCornerShape(12.dp),
+                                  colors = CardDefaults.cardColors(containerColor = Color.White),
+                                  elevation = CardDefaults.cardElevation(2.dp)
+                              ) {
+                                  Column(modifier = Modifier.padding(12.dp)) {
+                                      Row(
+                                          modifier = Modifier.fillMaxWidth(),
+                                          horizontalArrangement = Arrangement.SpaceBetween,
+                                          verticalAlignment = Alignment.CenterVertically
+                                      ) {
+                                          OutlinedTextField(
+                                              value = card.title,
+                                              onValueChange = { newVal -> cards = cards.map { if (it.id == card.id) it.copy(title = newVal) else it } },
+                                              label = { Text("Student / Platform") },
+                                              modifier = Modifier.weight(1f),
+                                              singleLine = true
+                                          )
+                                          IconButton(onClick = { cards = cards.filterNot { it.id == card.id } }) {
+                                              Icon(Icons.Default.Delete, contentDescription = "Remove", tint = Color(0xFFDC2626))
+                                          }
+                                      }
+                                      Spacer(Modifier.height(8.dp))
+                                      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                          OutlinedTextField(
+                                              value = card.usdAmount,
+                                              onValueChange = { newVal -> cards = cards.map { if (it.id == card.id) it.copy(usdAmount = newVal) else it } },
+                                              label = { Text("USD ($)") },
+                                              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                              modifier = Modifier.weight(1f),
+                                              singleLine = true
+                                          )
+                                          OutlinedTextField(
+                                              value = card.bdtRate,
+                                              onValueChange = { newVal -> cards = cards.map { if (it.id == card.id) it.copy(bdtRate = newVal) else it } },
+                                              label = { Text("Rate (৳)") },
+                                              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                              modifier = Modifier.weight(1f),
+                                              singleLine = true
+                                          )
+                                          OutlinedTextField(
+                                              value = card.feePercent,
+                                              onValueChange = { newVal -> cards = cards.map { if (it.id == card.id) it.copy(feePercent = newVal) else it } },
+                                              label = { Text("Fee %") },
+                                              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                              modifier = Modifier.weight(0.8f),
+                                              singleLine = true
+                                          )
+                                      }
+                                      Spacer(Modifier.height(8.dp))
+                                      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                          Text(
+                                              text = "সাব-টোটাল: ৳ ${String.format(Locale.US, "%,.2f", card.calculateNetBdt())}",
+                                              fontWeight = FontWeight.Bold,
+                                              color = Color(0xFF1E3A8A),
+                                              fontSize = 15.sp
+                                          )
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+
+              if (showSettings) {
+                  AlertDialog(
+                      onDismissRequest = { showSettings = false },
+                      title = { Text("Gemini API Key সেটআপ") },
+                      text = {
+                          Column {
+                              Text("Google AI Studio থেকে পাওয়া ফ্রি API Key এখানে পেস্ট করুন:", fontSize = 13.sp)
+                              Spacer(Modifier.height(8.dp))
+                              OutlinedTextField(
+                                  value = apiKey,
+                                  onValueChange = { apiKey = it },
+                                  placeholder = { Text("AIzaSy...") },
+                                  singleLine = true
+                              )
+                          }
+                      },
+                      confirmButton = {
+                          Button(onClick = {
+                              prefs.edit().putString("gemini_api_key", apiKey.trim()).apply()
+                              showSettings = false
+                              Toast.makeText(context, "API Key সেভ হয়েছে!", Toast.LENGTH_SHORT).show()
+                          }) { Text("Save") }
+                      }
+                  )
+              }
+          }
+
+          suspend fun parseCommandWithGemini(apiKey: String, command: String): List<CalcCardItem> = withContext(Dispatchers.IO) {
+              try {
+                  val url = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey")
+                  val conn = (url.openConnection() as HttpURLConnection).apply {
+                      requestMethod = "POST"
+                      setRequestProperty("Content-Type", "application/json")
+                      doOutput = true
+                  }
+
+                  val prompt = """
+                      Extract currency calculation items from this Bengali/English voice command: "$command"
+                      Return ONLY a valid JSON array of objects with keys: "title" (string, e.g. client/platform name), "usd" (number), "rate" (number, default 119 if not mentioned), "fee" (number, percentage fee, default 0 if not mentioned).
+                      Example output: [{"title":"Rakib - Payoneer","usd":100,"rate":119,"fee":2}]
+                      Do not include markdown formatting or extra text.
+                  """.trimIndent()
+
+                  val body = JSONObject().apply {
+                      put("contents", JSONArray().put(JSONObject().apply {
+                          put("parts", JSONArray().put(JSONObject().put("text", prompt)))
+                      }))
+                  }
+
+                  conn.outputStream.use { it.write(body.toString().toByteArray()) }
+                  val responseText = conn.inputStream.bufferedReader().readText()
+                  val jsonResponse = JSONObject(responseText)
+                  val rawText = jsonResponse.getJSONArray("candidates")
+                      .getJSONObject(0)
+                      .getJSONObject("content")
+                      .getJSONArray("parts")
+                      .getJSONObject(0)
+                      .getString("text")
+                      .replace("```json", "")
+                      .replace("```", "")
+                      .trim()
+
+                  val array = JSONArray(rawText)
+                  val result = mutableListOf<CalcCardItem>()
+                  for (i in 0 until array.length()) {
+                      val obj = array.getJSONObject(i)
+                      result.add(
+                          CalcCardItem(
+                              title = obj.optString("title", "AI Entry"),
+                              usdAmount = obj.optDouble("usd", 0.0).toString(),
+                              bdtRate = obj.optDouble("rate", 119.0).toString(),
+                              feePercent = obj.optDouble("fee", 0.0).toString()
+                          )
+                      )
+                  }
+                  result
+              } catch (e: Exception) {
+                  e.printStackTrace()
+                  emptyList()
+              }
+          }
+          EOF
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
+
+      - name: Build Debug APK
+        run: gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MultiRate-AI-Calculator
+          path: app/build/outputs/apk/debug/app-debug.apk
