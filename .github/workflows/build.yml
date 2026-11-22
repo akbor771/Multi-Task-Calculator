@@ -1,4 +1,4 @@
-name: Build MultiCalc Pro v3 APK
+name: Build MultiCalc Ultra v4 APK
 
 on:
   push:
@@ -62,8 +62,8 @@ jobs:
                   applicationId = "com.aktech.multicalc"
                   minSdk = 24
                   targetSdk = 34
-                  versionCode = 3
-                  versionName = "3.0"
+                  versionCode = 4
+                  versionName = "4.0"
               }
 
               compileOptions {
@@ -96,52 +96,90 @@ jobs:
           cat << 'EOF' > app/src/main/res/drawable/ic_launcher_background.xml
           <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:aapt="http://schemas.android.com/aapt"
               android:width="108dp"
               android:height="108dp"
               android:viewportWidth="108"
               android:viewportHeight="108">
+              <path android:pathData="M0,0h108v108h-108z">
+                  <aapt:attr name="android:fillColor">
+                      <gradient
+                          android:startX="0"
+                          android:startY="0"
+                          android:endX="108"
+                          android:endY="108"
+                          android:type="linear">
+                          <item android:offset="0" android:color="#064E3B"/>
+                          <item android:offset="0.5" android:color="#0F172A"/>
+                          <item android:offset="1" android:color="#020617"/>
+                      </gradient>
+                  </aapt:attr>
+              </path>
               <path
-                  android:fillColor="#0F172A"
-                  android:pathData="M0,0h108v108h-108z" />
-              <path
-                  android:fillColor="#1E3A8A"
-                  android:pathData="M0,0 L108,0 L108,54 Q54,75 0,54 Z" />
+                  android:fillColor="#10B981"
+                  android:fillAlpha="0.16"
+                  android:pathData="M54,12 A42,42 0 1,1 53.9,12 Z" />
           </vector>
           EOF
 
           cat << 'EOF' > app/src/main/res/drawable/ic_launcher_foreground.xml
           <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:aapt="http://schemas.android.com/aapt"
               android:width="108dp"
               android:height="108dp"
               android:viewportWidth="108"
               android:viewportHeight="108">
+              <!-- Back stacked tab card -->
               <path
                   android:fillColor="#1E293B"
-                  android:strokeColor="#60A5FA"
-                  android:strokeWidth="2.5"
-                  android:pathData="M30,24 L78,24 A6,6 0 0,1 84,30 L84,78 A6,6 0 0,1 78,84 L30,84 A6,6 0 0,1 24,78 L24,30 A6,6 0 0,1 30,24 Z" />
+                  android:strokeColor="#34D399"
+                  android:strokeWidth="1.5"
+                  android:pathData="M34,22 L76,22 A7,7 0 0,1 83,29 L83,71 A7,7 0 0,1 76,78 L34,78 A7,7 0 0,1 27,71 L27,29 A7,7 0 0,1 34,22 Z" />
+              <!-- Front main calculator glass body -->
               <path
-                  android:fillColor="#0D0F14"
-                  android:pathData="M32,32 L76,32 L76,46 L32,46 Z" />
+                  android:strokeColor="#6EE7B7"
+                  android:strokeWidth="1.8"
+                  android:pathData="M28,28 L72,28 A8,8 0 0,1 80,36 L80,78 A8,8 0 0,1 72,86 L28,86 A8,8 0 0,1 20,78 L20,36 A8,8 0 0,1 28,28 Z">
+                  <aapt:attr name="android:fillColor">
+                      <gradient
+                          android:startX="20"
+                          android:startY="28"
+                          android:endX="80"
+                          android:endY="86"
+                          android:type="linear">
+                          <item android:offset="0" android:color="#1E293B"/>
+                          <item android:offset="1" android:color="#090D16"/>
+                      </gradient>
+                  </aapt:attr>
+              </path>
+              <!-- Display bar -->
               <path
-                  android:fillColor="#4ADE80"
-                  android:pathData="M62,37 L72,37 L72,41 L62,41 Z" />
+                  android:fillColor="#020617"
+                  android:pathData="M27,35 L73,35 A3,3 0 0,1 76,38 L76,47 A3,3 0 0,1 73,50 L27,50 A3,3 0 0,1 24,47 L24,38 A3,3 0 0,1 27,35 Z" />
+              <!-- Green accent digits indicator -->
               <path
-                  android:fillColor="#FFFFFF"
-                  android:pathData="M39,55 h4 v4 h4 v4 h-4 v4 h-4 v-4 h-4 v-4 h4 z" />
+                  android:fillColor="#10B981"
+                  android:pathData="M56,40 L71,40 L71,45 L56,45 Z" />
+              <!-- Plus icon -->
+              <path
+                  android:fillColor="#F8FAFC"
+                  android:pathData="M33,56 h3.5 v4.5 h4.5 v3.5 h-4.5 v4.5 h-3.5 v-4.5 h-4.5 v-3.5 h4.5 z" />
+              <!-- Multiply icon -->
               <path
                   android:fillColor="#94A3B8"
-                  android:pathData="M60,59 h12 v4 h-12 z" />
+                  android:pathData="M53,57 L55.5,59.5 L58,57 L60,59 L57.5,61.5 L60,64 L58,66 L55.5,63.5 L53,66 L51,64 L53.5,61.5 L51,59 Z" />
+              <!-- Minus icon -->
               <path
                   android:fillColor="#94A3B8"
-                  android:pathData="M35,72 h12 v4 h-12 z" />
+                  android:pathData="M29,75 h11 v3.5 h-11 z" />
+              <!-- Emerald Equals button -->
               <path
-                  android:fillColor="#2563EB"
-                  android:pathData="M58,69 h16 v10 h-16 z" />
+                  android:fillColor="#10B981"
+                  android:pathData="M50,71 L71,71 A4,4 0 0,1 75,75 L75,78 A4,4 0 0,1 71,82 L50,82 A4,4 0 0,1 46,78 L46,75 A4,4 0 0,1 50,71 Z" />
               <path
                   android:fillColor="#FFFFFF"
-                  android:pathData="M62,72 h8 v1.8 h-8 z M62,75.5 h8 v1.8 h-8 z" />
+                  android:pathData="M55,74.2 h11 v2 h-11 z M55,77.8 h11 v2 h-11 z" />
           </vector>
           EOF
 
@@ -172,10 +210,11 @@ jobs:
                   android:allowBackup="true"
                   android:icon="@mipmap/ic_launcher"
                   android:roundIcon="@mipmap/ic_launcher_round"
-                  android:label="MultiCalc Pro"
+                  android:label="MultiCalc Ultra"
                   android:theme="@android:style/Theme.Material.NoActionBar">
                   <activity
                       android:name=".MainActivity"
+                      android:windowSoftInputMode="stateAlwaysHidden"
                       android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
@@ -204,14 +243,18 @@ jobs:
           import androidx.activity.compose.rememberLauncherForActivityResult
           import androidx.activity.compose.setContent
           import androidx.activity.result.contract.ActivityResultContracts
-          import androidx.compose.foundation.ExperimentalFoundationApi
+          import androidx.compose.foundation.BorderStroke
           import androidx.compose.foundation.background
           import androidx.compose.foundation.clickable
-          import androidx.compose.foundation.combinedClickable
           import androidx.compose.foundation.horizontalScroll
           import androidx.compose.foundation.layout.*
           import androidx.compose.foundation.rememberScrollState
+          import androidx.compose.foundation.shape.CircleShape
           import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.foundation.text.BasicTextField
+          import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+          import androidx.compose.foundation.text.selection.SelectionContainer
+          import androidx.compose.foundation.text.selection.TextSelectionColors
           import androidx.compose.material.icons.Icons
           import androidx.compose.material.icons.filled.*
           import androidx.compose.material3.*
@@ -220,10 +263,15 @@ jobs:
           import androidx.compose.ui.Modifier
           import androidx.compose.ui.draw.clip
           import androidx.compose.ui.graphics.Color
-          import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+          import androidx.compose.ui.graphics.SolidColor
+          import androidx.compose.ui.platform.LocalClipboardManager
           import androidx.compose.ui.platform.LocalContext
-          import androidx.compose.ui.platform.LocalHapticFeedback
+          import androidx.compose.ui.platform.LocalTextInputService
+          import androidx.compose.ui.text.AnnotatedString
+          import androidx.compose.ui.text.TextRange
+          import androidx.compose.ui.text.TextStyle
           import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.text.input.TextFieldValue
           import androidx.compose.ui.text.style.TextAlign
           import androidx.compose.ui.text.style.TextOverflow
           import androidx.compose.ui.unit.dp
@@ -242,7 +290,7 @@ jobs:
           data class CalcTab(
               val id: String = UUID.randomUUID().toString(),
               val name: String,
-              val expression: String = "",
+              val exprValue: TextFieldValue = TextFieldValue(""),
               val result: String = "0"
           ) {
               fun numericResult(): Double {
@@ -254,24 +302,20 @@ jobs:
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
                   setContent {
-                      MaterialTheme(colorScheme = darkColorScheme()) {
-                          StandardMultiCalcApp()
-                      }
+                      UltraMultiCalcApp()
                   }
               }
           }
 
-          @OptIn(ExperimentalFoundationApi::class)
           @Composable
-          fun StandardMultiCalcApp() {
+          fun UltraMultiCalcApp() {
               val context = LocalContext.current
-              val haptics = LocalHapticFeedback.current
-              val prefs = remember { context.getSharedPreferences("calc_pro_prefs", Context.MODE_PRIVATE) }
+              val prefs = remember { context.getSharedPreferences("calc_ultra_prefs", Context.MODE_PRIVATE) }
               val coroutineScope = rememberCoroutineScope()
 
               var apiKey by remember { mutableStateOf(prefs.getString("gemini_api_key", "") ?: "") }
+              var isDarkTheme by remember { mutableStateOf(prefs.getBoolean("dark_theme", false)) }
               var showSettings by remember { mutableStateOf(false) }
-              var showClipboardMenu by remember { mutableStateOf(false) }
               var renameTabId by remember { mutableStateOf<String?>(null) }
               var renameText by remember { mutableStateOf("") }
               var isListening by remember { mutableStateOf(false) }
@@ -292,72 +336,99 @@ jobs:
               val allTabsTotal = tabs.sumOf { it.numericResult() }
               val formatter = remember { DecimalFormat("#,##0.####") }
 
-              fun updateCurrentTab(newExpr: String, autoEval: Boolean = true) {
-                  val evaluated = if (autoEval) evaluateExpression(newExpr) else currentTab.result
+              // Samsung-inspired Ultra Clean Light & Dark Palettes
+              val bgMain = if (isDarkTheme) Color(0xFF0A0C10) else Color(0xFFF8F9FA)
+              val cardSurface = if (isDarkTheme) Color(0xFF151922) else Color(0xFFFFFFFF)
+              val keyNumBg = if (isDarkTheme) Color(0xFF161A23) else Color(0xFFFFFFFF)
+              val keyOpBg = if (isDarkTheme) Color(0xFF1E2430) else Color(0xFFE9ECEF)
+              val keyClearBg = if (isDarkTheme) Color(0xFF241B20) else Color(0xFFFEE2E2)
+              val textPrimary = if (isDarkTheme) Color(0xFFF8FAFC) else Color(0xFF111827)
+              val textSecondary = if (isDarkTheme) Color(0xFF94A3B8) else Color(0xFF6B7280)
+              val accentGreen = Color(0xFF10B981)
+              val accentBlue = Color(0xFF2563EB)
+
+              val selectionColors = TextSelectionColors(
+                  handleColor = accentBlue,
+                  backgroundColor = accentBlue.copy(alpha = 0.25f)
+              )
+
+              fun updateExpressionField(newValue: TextFieldValue, autoEval: Boolean = true) {
+                  val cleanedText = normalizeBengaliDigits(newValue.text)
+                      .replace("*", "×")
+                      .replace("/", "÷")
+                      .filter { it in "0123456789.+-×÷%()" }
+                  val safeSelStart = newValue.selection.start.coerceIn(0, cleanedText.length)
+                  val safeSelEnd = newValue.selection.end.coerceIn(0, cleanedText.length)
+                  val finalTfv = TextFieldValue(cleanedText, TextRange(safeSelStart, safeSelEnd))
+
+                  val evaluated = if (autoEval) evaluateExpression(cleanedText) else currentTab.result
                   tabs = tabs.mapIndexed { index, tab ->
                       if (index == safeIndex) {
-                          tab.copy(expression = newExpr, result = evaluated ?: tab.result)
+                          tab.copy(exprValue = finalTfv, result = evaluated ?: tab.result)
                       } else tab
                   }
               }
 
-              fun copyToClipboard(label: String, text: String) {
-                  val clip = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                  clip.setPrimaryClip(ClipData.newPlainText(label, text))
-                  Toast.makeText(context, "Copied: $text", Toast.LENGTH_SHORT).show()
-              }
+              fun insertAtCursor(strToInsert: String, autoEval: Boolean = true) {
+                  val tfv = currentTab.exprValue
+                  val text = tfv.text
+                  val start = tfv.selection.start.coerceIn(0, text.length)
+                  val end = tfv.selection.end.coerceIn(0, text.length)
+                  val minIdx = minOf(start, end)
+                  val maxIdx = maxOf(start, end)
 
-              fun pasteFromClipboard() {
-                  val clip = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                  val pasted = clip.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
-                  val normalized = normalizeBengaliDigits(pasted)
-                      .replace(",", "")
-                      .replace("*", "×")
-                      .replace("/", "÷")
-                      .filter { it in "0123456789.+-×÷%" }
-                  if (normalized.isNotEmpty()) {
-                      val next = if (currentTab.expression == "0") normalized else currentTab.expression + normalized
-                      updateCurrentTab(next)
-                      Toast.makeText(context, "Pasted: $normalized", Toast.LENGTH_SHORT).show()
-                  } else {
-                      Toast.makeText(context, "ক্লিপবোর্ডে কোনো সংখ্যা পাওয়া যায়নি", Toast.LENGTH_SHORT).show()
-                  }
+                  val newText = text.substring(0, minIdx) + strToInsert + text.substring(maxIdx)
+                  val newCursor = minIdx + strToInsert.length
+                  updateExpressionField(TextFieldValue(newText, TextRange(newCursor)), autoEval)
               }
 
               fun onButtonPress(label: String) {
-                  val expr = currentTab.expression
+                  val tfv = currentTab.exprValue
+                  val text = tfv.text
                   when (label) {
-                      "AC" -> {
-                          tabs = tabs.mapIndexed { i, t -> if (i == safeIndex) t.copy(expression = "", result = "0") else t }
+                      "C" -> {
+                          tabs = tabs.mapIndexed { i, t ->
+                              if (i == safeIndex) t.copy(exprValue = TextFieldValue(""), result = "0") else t
+                          }
                       }
                       "⌫" -> {
-                          if (expr.isNotEmpty()) {
-                              val next = expr.dropLast(1)
-                              if (next.isEmpty()) {
-                                  tabs = tabs.mapIndexed { i, t -> if (i == safeIndex) t.copy(expression = "", result = "0") else t }
-                              } else {
-                                  updateCurrentTab(next)
+                          val start = tfv.selection.start.coerceIn(0, text.length)
+                          val end = tfv.selection.end.coerceIn(0, text.length)
+                          if (start != end) {
+                              val minIdx = minOf(start, end)
+                              val maxIdx = maxOf(start, end)
+                              val next = text.removeRange(minIdx, maxIdx)
+                              updateExpressionField(TextFieldValue(next, TextRange(minIdx)))
+                          } else if (start > 0) {
+                              val next = text.removeRange(start - 1, start)
+                              updateExpressionField(TextFieldValue(next, TextRange(start - 1)))
+                          }
+                      }
+                      "()" -> {
+                          val openCount = text.count { it == '(' }
+                          val closeCount = text.count { it == ')' }
+                          val bracket = if (openCount > closeCount && text.isNotEmpty() && text.last() in "0123456789)%") ")" else "("
+                          insertAtCursor(bracket, autoEval = bracket == ")")
+                      }
+                      "=" -> {
+                          val res = evaluateExpression(text)
+                          if (res != null) {
+                              val plain = res.replace(",", "")
+                              tabs = tabs.mapIndexed { i, t ->
+                                  if (i == safeIndex) t.copy(exprValue = TextFieldValue(plain, TextRange(plain.length)), result = res) else t
                               }
                           }
                       }
-                      "=" -> {
-                          val res = evaluateExpression(expr)
-                          if (res != null) {
-                              tabs = tabs.mapIndexed { i, t -> if (i == safeIndex) t.copy(expression = res, result = res) else t }
-                          }
-                      }
                       "+", "-", "×", "÷", "%" -> {
-                          if (expr.isEmpty() && currentTab.result != "0") {
-                              updateCurrentTab(currentTab.result.replace(",", "") + label, autoEval = false)
-                          } else if (expr.isNotEmpty()) {
-                              val last = expr.last()
-                              val next = if (last in listOf('+', '-', '×', '÷')) expr.dropLast(1) + label else expr + label
-                              updateCurrentTab(next, autoEval = label == "%")
+                          if (text.isEmpty() && currentTab.result != "0") {
+                              val base = currentTab.result.replace(",", "") + label
+                              updateExpressionField(TextFieldValue(base, TextRange(base.length)), autoEval = label == "%")
+                          } else {
+                              insertAtCursor(label, autoEval = label == "%")
                           }
                       }
                       else -> {
-                          val next = if (expr == "0" && label != ".") label else expr + label
-                          updateCurrentTab(next)
+                          insertAtCursor(label, autoEval = true)
                       }
                   }
               }
@@ -395,7 +466,7 @@ jobs:
                                   val (mathExpr, errorMsg) = convertVoiceToMath(apiKey, spoken)
                                   isAiThinking = false
                                   if (mathExpr.isNotBlank()) {
-                                      updateCurrentTab(mathExpr)
+                                      updateExpressionField(TextFieldValue(mathExpr, TextRange(mathExpr.length)), autoEval = true)
                                   } else {
                                       Toast.makeText(context, errorMsg ?: "বুঝতে পারিনি: $spoken", Toast.LENGTH_LONG).show()
                                   }
@@ -404,7 +475,7 @@ jobs:
                       }
                       override fun onError(error: Int) {
                           isListening = false
-                          Toast.makeText(context, "ভয়েস এরর ($error), আবার চেষ্টা করুন", Toast.LENGTH_SHORT).show()
+                          Toast.makeText(context, "ভয়েস এরর ($error), আবার বলুন", Toast.LENGTH_SHORT).show()
                       }
                       override fun onBeginningOfSpeech() {}
                       override fun onRmsChanged(rmsdB: Float) {}
@@ -416,301 +487,340 @@ jobs:
                   recognizer.startListening(intent)
               }
 
-              Column(
-                  modifier = Modifier
-                      .fillMaxSize()
-                      .background(Color(0xFF0D0F14))
-                      .statusBarsPadding()
-                      .navigationBarsPadding()
-              ) {
-                  // Top Bar: Combined Total & Actions
-                  Row(
-                      modifier = Modifier
-                          .fillMaxWidth()
-                          .padding(horizontal = 16.dp, vertical = 10.dp),
-                      verticalAlignment = Alignment.CenterVertically,
-                      horizontalArrangement = Arrangement.SpaceBetween
-                  ) {
+              MaterialTheme(colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()) {
+                  CompositionLocalProvider(LocalTextSelectionColors provides selectionColors) {
                       Column(
-                          modifier = Modifier.clickable {
-                              copyToClipboard("Grand Total", formatter.format(allTabsTotal).replace(",", ""))
-                          }
+                          modifier = Modifier
+                              .fillMaxSize()
+                              .background(bgMain)
+                              .statusBarsPadding()
+                              .navigationBarsPadding()
                       ) {
-                          Text("ALL TABS TOTAL (TAP TO COPY)", fontSize = 10.sp, color = Color(0xFF8E95A5), letterSpacing = 0.8.sp)
-                          Text(
-                              text = formatter.format(allTabsTotal),
-                              fontSize = 20.sp,
-                              fontWeight = FontWeight.Bold,
-                              color = Color(0xFF4ADE80)
-                          )
-                      }
-
-                      Row(verticalAlignment = Alignment.CenterVertically) {
-                          IconButton(onClick = { pasteFromClipboard() }) {
-                              Icon(Icons.Default.ContentPaste, contentDescription = "Paste", tint = Color(0xFF9CA3AF))
-                          }
-                          IconButton(onClick = { triggerVoiceCalc() }) {
-                              if (isAiThinking) {
-                                  CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color(0xFF60A5FA))
-                              } else {
-                                  Icon(
-                                      Icons.Default.Mic,
-                                      contentDescription = "Voice",
-                                      tint = if (isListening) Color(0xFFEF4444) else Color(0xFF60A5FA)
-                                  )
-                              }
-                          }
-                          IconButton(onClick = { showSettings = true }) {
-                              Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color(0xFF9CA3AF))
-                          }
-                      }
-                  }
-
-                  // Multi-Calculator Tabs Row
-                  Row(
-                      modifier = Modifier
-                          .fillMaxWidth()
-                          .padding(horizontal = 12.dp)
-                          .horizontalScroll(rememberScrollState()),
-                      horizontalArrangement = Arrangement.spacedBy(8.dp),
-                      verticalAlignment = Alignment.CenterVertically
-                  ) {
-                      tabs.forEachIndexed { index, tab ->
-                          val selected = index == safeIndex
-                          Surface(
-                              shape = RoundedCornerShape(14.dp),
-                              color = if (selected) Color(0xFF2563EB) else Color(0xFF1A1E29),
-                              modifier = Modifier.clickable { activeTabIndex = index }
-                          ) {
-                              Row(
-                                  modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                  verticalAlignment = Alignment.CenterVertically,
-                                  horizontalArrangement = Arrangement.spacedBy(6.dp)
-                              ) {
-                                  Column(modifier = Modifier.clickable {
-                                      if (selected) {
-                                          renameTabId = tab.id
-                                          renameText = tab.name
-                                      } else {
-                                          activeTabIndex = index
-                                      }
-                                  }) {
-                                      Text(
-                                          text = tab.name,
-                                          fontSize = 11.sp,
-                                          color = if (selected) Color.White.copy(alpha = 0.85f) else Color(0xFF9CA3AF),
-                                          maxLines = 1,
-                                          overflow = TextOverflow.Ellipsis
-                                      )
-                                      Text(
-                                          text = tab.result,
-                                          fontSize = 14.sp,
-                                          fontWeight = FontWeight.Bold,
-                                          color = Color.White,
-                                          maxLines = 1
-                                      )
-                                  }
-                                  if (tabs.size > 1) {
-                                      Icon(
-                                          Icons.Default.Close,
-                                          contentDescription = "Close Tab",
-                                          tint = Color.White.copy(alpha = 0.6f),
-                                          modifier = Modifier
-                                              .size(15.dp)
-                                              .clickable {
-                                                  tabs = tabs.filterIndexed { i, _ -> i != index }
-                                                  if (activeTabIndex >= tabs.size) activeTabIndex = tabs.size - 1
-                                              }
-                                      )
-                                  }
-                              }
-                          }
-                      }
-
-                      FilledIconButton(
-                          onClick = {
-                              tabs = tabs + CalcTab(name = "Calc ${tabs.size + 1}")
-                              activeTabIndex = tabs.size - 1
-                          },
-                          colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFF1A1E29)),
-                          modifier = Modifier.size(40.dp)
-                      ) {
-                          Icon(Icons.Default.Add, contentDescription = "New Calc", tint = Color.White)
-                      }
-                  }
-
-                  // Main Calculator Display Area (Long Press for Copy / Paste)
-                  Box(
-                      modifier = Modifier
-                          .fillMaxWidth()
-                          .weight(0.36f)
-                          .combinedClickable(
-                              onClick = {},
-                              onLongClick = {
-                                  haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                  showClipboardMenu = true
-                              }
-                          )
-                          .padding(horizontal = 20.dp, vertical = 12.dp),
-                      contentAlignment = Alignment.BottomEnd
-                  ) {
-                      Column(horizontalAlignment = Alignment.End) {
-                          Text(
-                              text = if (isListening) "Listening..." else currentTab.expression,
-                              fontSize = 24.sp,
-                              color = if (isListening) Color(0xFF60A5FA) else Color(0xFF9CA3AF),
-                              textAlign = TextAlign.End,
-                              maxLines = 2,
-                              overflow = TextOverflow.Ellipsis
-                          )
-                          Spacer(Modifier.height(8.dp))
-                          Text(
-                              text = currentTab.result,
-                              fontSize = 48.sp,
-                              fontWeight = FontWeight.Bold,
-                              color = Color.White,
-                              textAlign = TextAlign.End,
-                              maxLines = 1,
-                              overflow = TextOverflow.Ellipsis
-                          )
-                      }
-
-                      DropdownMenu(
-                          expanded = showClipboardMenu,
-                          onDismissRequest = { showClipboardMenu = false }
-                      ) {
-                          DropdownMenuItem(
-                              text = { Text("Copy Result (${currentTab.result})") },
-                              leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
-                              onClick = {
-                                  copyToClipboard("Result", currentTab.result.replace(",", ""))
-                                  showClipboardMenu = false
-                              }
-                          )
-                          if (currentTab.expression.isNotEmpty()) {
-                              DropdownMenuItem(
-                                  text = { Text("Copy Expression") },
-                                  leadingIcon = { Icon(Icons.Default.Code, contentDescription = null) },
-                                  onClick = {
-                                      copyToClipboard("Expression", currentTab.expression)
-                                      showClipboardMenu = false
-                                  }
-                              )
-                          }
-                          DropdownMenuItem(
-                              text = { Text("Paste Number") },
-                              leadingIcon = { Icon(Icons.Default.ContentPaste, contentDescription = null) },
-                              onClick = {
-                                  pasteFromClipboard()
-                                  showClipboardMenu = false
-                              }
-                          )
-                      }
-                  }
-
-                  // Standard Calculator Keypad
-                  val buttonRows = listOf(
-                      listOf("AC", "⌫", "%", "÷"),
-                      listOf("7", "8", "9", "×"),
-                      listOf("4", "5", "6", "-"),
-                      listOf("1", "2", "3", "+"),
-                      listOf("00", "0", ".", "=")
-                  )
-
-                  Column(
-                      modifier = Modifier
-                          .fillMaxWidth()
-                          .weight(0.64f)
-                          .padding(horizontal = 14.dp, vertical = 10.dp),
-                      verticalArrangement = Arrangement.spacedBy(10.dp)
-                  ) {
-                      buttonRows.forEach { row ->
+                          // Top Header Bar
                           Row(
                               modifier = Modifier
                                   .fillMaxWidth()
-                                  .weight(1f),
-                              horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                  .padding(horizontal = 16.dp, vertical = 8.dp),
+                              verticalAlignment = Alignment.CenterVertically,
+                              horizontalArrangement = Arrangement.SpaceBetween
                           ) {
-                              row.forEach { btn ->
-                                  val bgColor = when (btn) {
-                                      "=" -> Color(0xFF2563EB)
-                                      "÷", "×", "-", "+" -> Color(0xFF1E293B)
-                                      "AC", "⌫", "%" -> Color(0xFF272B38)
-                                      else -> Color(0xFF161922)
+                              Surface(
+                                  shape = RoundedCornerShape(14.dp),
+                                  color = cardSurface,
+                                  border = BorderStroke(1.dp, accentGreen.copy(alpha = 0.35f)),
+                                  modifier = Modifier.clickable {
+                                      val clip = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                      val plainTotal = formatter.format(allTabsTotal).replace(",", "")
+                                      clip.setPrimaryClip(ClipData.newPlainText("Total", plainTotal))
+                                      Toast.makeText(context, "Grand Total Copied: $plainTotal", Toast.LENGTH_SHORT).show()
                                   }
-                                  val textColor = when (btn) {
-                                      "AC" -> Color(0xFFF87171)
-                                      "÷", "×", "-", "+", "%" -> Color(0xFF60A5FA)
-                                      else -> Color.White
-                                  }
-
-                                  Box(
-                                      contentAlignment = Alignment.Center,
-                                      modifier = Modifier
-                                          .weight(1f)
-                                          .fillMaxHeight()
-                                          .clip(RoundedCornerShape(22.dp))
-                                          .background(bgColor)
-                                          .clickable { onButtonPress(btn) }
+                              ) {
+                                  Row(
+                                      modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                      verticalAlignment = Alignment.CenterVertically,
+                                      horizontalArrangement = Arrangement.spacedBy(8.dp)
                                   ) {
-                                      Text(
-                                          text = btn,
-                                          fontSize = 24.sp,
-                                          fontWeight = FontWeight.SemiBold,
-                                          color = textColor
+                                      Column {
+                                          Text("GRAND TOTAL", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = textSecondary, letterSpacing = 0.8.sp)
+                                          Text(
+                                              text = formatter.format(allTabsTotal),
+                                              fontSize = 18.sp,
+                                              fontWeight = FontWeight.ExtraBold,
+                                              color = accentGreen
+                                          )
+                                      }
+                                      Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = accentGreen, modifier = Modifier.size(16.dp))
+                                  }
+                              }
+
+                              Row(verticalAlignment = Alignment.CenterVertically) {
+                                  IconButton(onClick = {
+                                      isDarkTheme = !isDarkTheme
+                                      prefs.edit().putBoolean("dark_theme", isDarkTheme).apply()
+                                  }) {
+                                      Icon(
+                                          if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                          contentDescription = "Theme",
+                                          tint = textSecondary
                                       )
+                                  }
+                                  IconButton(onClick = { triggerVoiceCalc() }) {
+                                      if (isAiThinking) {
+                                          CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = accentBlue)
+                                      } else {
+                                          Icon(
+                                              Icons.Default.Mic,
+                                              contentDescription = "Voice",
+                                              tint = if (isListening) Color(0xFFEF4444) else accentBlue
+                                          )
+                                      }
+                                  }
+                                  IconButton(onClick = { showSettings = true }) {
+                                      Icon(Icons.Default.Settings, contentDescription = "Settings", tint = textSecondary)
+                                  }
+                              }
+                          }
+
+                          // Multi-Tab Strip
+                          Row(
+                              modifier = Modifier
+                                  .fillMaxWidth()
+                                  .padding(horizontal = 14.dp)
+                                  .horizontalScroll(rememberScrollState()),
+                              horizontalArrangement = Arrangement.spacedBy(8.dp),
+                              verticalAlignment = Alignment.CenterVertically
+                          ) {
+                              tabs.forEachIndexed { index, tab ->
+                                  val selected = index == safeIndex
+                                  Surface(
+                                      shape = RoundedCornerShape(14.dp),
+                                      color = if (selected) accentGreen else cardSurface,
+                                      border = if (!selected) BorderStroke(1.dp, textSecondary.copy(alpha = 0.15f)) else null,
+                                      shadowElevation = if (selected) 3.dp else 0.dp,
+                                      modifier = Modifier.clickable { activeTabIndex = index }
+                                  ) {
+                                      Row(
+                                          modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                          verticalAlignment = Alignment.CenterVertically,
+                                          horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                      ) {
+                                          Column(modifier = Modifier.clickable {
+                                              if (selected) {
+                                                  renameTabId = tab.id
+                                                  renameText = tab.name
+                                              } else {
+                                                  activeTabIndex = index
+                                              }
+                                          }) {
+                                              Text(
+                                                  text = tab.name,
+                                                  fontSize = 11.sp,
+                                                  fontWeight = FontWeight.Medium,
+                                                  color = if (selected) Color.White.copy(alpha = 0.9f) else textSecondary,
+                                                  maxLines = 1,
+                                                  overflow = TextOverflow.Ellipsis
+                                              )
+                                              Text(
+                                                  text = tab.result,
+                                                  fontSize = 14.sp,
+                                                  fontWeight = FontWeight.Bold,
+                                                  color = if (selected) Color.White else textPrimary,
+                                                  maxLines = 1
+                                              )
+                                          }
+                                          if (tabs.size > 1) {
+                                              Icon(
+                                                  Icons.Default.Close,
+                                                  contentDescription = "Close Tab",
+                                                  tint = if (selected) Color.White.copy(alpha = 0.8f) else textSecondary,
+                                                  modifier = Modifier
+                                                      .size(15.dp)
+                                                      .clickable {
+                                                          tabs = tabs.filterIndexed { i, _ -> i != index }
+                                                          if (activeTabIndex >= tabs.size) activeTabIndex = tabs.size - 1
+                                                      }
+                                              )
+                                          }
+                                      }
+                                  }
+                              }
+
+                              Surface(
+                                  shape = CircleShape,
+                                  color = cardSurface,
+                                  border = BorderStroke(1.dp, textSecondary.copy(alpha = 0.2f)),
+                                  modifier = Modifier
+                                      .size(38.dp)
+                                      .clickable {
+                                          tabs = tabs + CalcTab(name = "Calc ${tabs.size + 1}")
+                                          activeTabIndex = tabs.size - 1
+                                      }
+                              ) {
+                                  Box(contentAlignment = Alignment.Center) {
+                                      Icon(Icons.Default.Add, contentDescription = "Add Calc", tint = textPrimary, modifier = Modifier.size(20.dp))
+                                  }
+                              }
+                          }
+
+                          // Display with Native Cursor & Drag-Handle Copy/Cut/Paste (No Soft Keyboard!)
+                          Column(
+                              modifier = Modifier
+                                  .fillMaxWidth()
+                                  .weight(0.35f)
+                                  .padding(horizontal = 22.dp, vertical = 10.dp),
+                              verticalArrangement = Arrangement.Bottom,
+                              horizontalAlignment = Alignment.End
+                          ) {
+                              if (isListening) {
+                                  Text(
+                                      text = "Listening...",
+                                      fontSize = 26.sp,
+                                      fontWeight = FontWeight.Medium,
+                                      color = accentBlue,
+                                      textAlign = TextAlign.End
+                                  )
+                              } else {
+                                  // Suppress soft keyboard while keeping native selection handles & Cut/Copy/Paste toolbar
+                                  CompositionLocalProvider(LocalTextInputService provides null) {
+                                      BasicTextField(
+                                          value = currentTab.exprValue,
+                                          onValueChange = { newTfv -> updateExpressionField(newTfv) },
+                                          textStyle = TextStyle(
+                                              fontSize = 32.sp,
+                                              fontWeight = FontWeight.Normal,
+                                              color = textPrimary,
+                                              textAlign = TextAlign.End
+                                          ),
+                                          cursorBrush = SolidColor(accentBlue),
+                                          modifier = Modifier.fillMaxWidth(),
+                                          decorationBox = { innerTextField ->
+                                              Box(
+                                                  modifier = Modifier.fillMaxWidth(),
+                                                  contentAlignment = Alignment.CenterEnd
+                                              ) {
+                                                  if (currentTab.exprValue.text.isEmpty()) {
+                                                      Text(
+                                                          text = "0",
+                                                          fontSize = 36.sp,
+                                                          color = textSecondary.copy(alpha = 0.4f),
+                                                          textAlign = TextAlign.End
+                                                      )
+                                                  }
+                                                  innerTextField()
+                                              }
+                                          }
+                                      )
+                                  }
+                              }
+
+                              Spacer(Modifier.height(10.dp))
+
+                              // Selectable Live Preview Result (Drag to copy specific digits of result too!)
+                              SelectionContainer {
+                                  Text(
+                                      text = currentTab.result,
+                                      fontSize = 42.sp,
+                                      fontWeight = FontWeight.Bold,
+                                      color = textSecondary,
+                                      textAlign = TextAlign.End,
+                                      maxLines = 1,
+                                      overflow = TextOverflow.Ellipsis
+                                  )
+                              }
+                          }
+
+                          Divider(color = textSecondary.copy(alpha = 0.12f), thickness = 1.dp, modifier = Modifier.padding(horizontal = 18.dp))
+
+                          // Samsung OneUI-Style Circular/Pill Keypad
+                          val buttonRows = listOf(
+                              listOf("C", "⌫", "%", "÷"),
+                              listOf("7", "8", "9", "×"),
+                              listOf("4", "5", "6", "-"),
+                              listOf("1", "2", "3", "+"),
+                              listOf("()", "0", ".", "=")
+                          )
+
+                          Column(
+                              modifier = Modifier
+                                  .fillMaxWidth()
+                                  .weight(0.65f)
+                                  .padding(horizontal = 16.dp, vertical = 12.dp),
+                              verticalArrangement = Arrangement.spacedBy(12.dp)
+                          ) {
+                              buttonRows.forEach { row ->
+                                  Row(
+                                      modifier = Modifier
+                                          .fillMaxWidth()
+                                          .weight(1f),
+                                      horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                  ) {
+                                      row.forEach { btn ->
+                                          val bgColor = when (btn) {
+                                              "=" -> accentGreen
+                                              "C" -> keyClearBg
+                                              "⌫", "%", "÷", "×", "-", "+" -> keyOpBg
+                                              else -> keyNumBg
+                                          }
+                                          val labelColor = when (btn) {
+                                              "=" -> Color.White
+                                              "C" -> Color(0xFFEF4444)
+                                              "⌫" -> Color(0xFFEF4444)
+                                              "%", "÷", "×", "-", "+" -> accentGreen
+                                              else -> textPrimary
+                                          }
+
+                                          Surface(
+                                              shape = CircleShape,
+                                              color = bgColor,
+                                              shadowElevation = if (!isDarkTheme && bgColor == keyNumBg) 1.dp else 0.dp,
+                                              modifier = Modifier
+                                                  .weight(1f)
+                                                  .fillMaxHeight()
+                                                  .clip(CircleShape)
+                                                  .clickable { onButtonPress(btn) }
+                                          ) {
+                                              Box(contentAlignment = Alignment.Center) {
+                                                  Text(
+                                                      text = btn,
+                                                      fontSize = 26.sp,
+                                                      fontWeight = if (btn == "=") FontWeight.Bold else FontWeight.Medium,
+                                                      color = labelColor
+                                                  )
+                                              }
+                                          }
+                                      }
                                   }
                               }
                           }
                       }
                   }
-              }
 
-              if (renameTabId != null) {
-                  AlertDialog(
-                      onDismissRequest = { renameTabId = null },
-                      title = { Text("Tab Name") },
-                      text = {
-                          OutlinedTextField(
-                              value = renameText,
-                              onValueChange = { renameText = it },
-                              placeholder = { Text("e.g. Payoneer / Student") },
-                              singleLine = true
-                          )
-                      },
-                      confirmButton = {
-                          Button(onClick = {
-                              tabs = tabs.map { if (it.id == renameTabId) it.copy(name = renameText.ifBlank { it.name }) else it }
-                              renameTabId = null
-                          }) { Text("Save") }
-                      }
-                  )
-              }
-
-              if (showSettings) {
-                  AlertDialog(
-                      onDismissRequest = { showSettings = false },
-                      title = { Text("Gemini API Key") },
-                      text = {
-                          Column {
-                              Text("Google AI Studio থেকে নেওয়া ফ্রি API Key পেস্ট করুন:", fontSize = 13.sp)
-                              Spacer(Modifier.height(8.dp))
+                  if (renameTabId != null) {
+                      AlertDialog(
+                          onDismissRequest = { renameTabId = null },
+                          title = { Text("Tab Name") },
+                          text = {
                               OutlinedTextField(
-                                  value = apiKey,
-                                  onValueChange = { apiKey = it },
-                                  placeholder = { Text("AIzaSy...") },
+                                  value = renameText,
+                                  onValueChange = { renameText = it },
+                                  placeholder = { Text("e.g. Payoneer / Student") },
                                   singleLine = true
                               )
+                          },
+                          confirmButton = {
+                              Button(onClick = {
+                                  tabs = tabs.map { if (it.id == renameTabId) it.copy(name = renameText.ifBlank { it.name }) else it }
+                                  renameTabId = null
+                              }) { Text("Save") }
                           }
-                      },
-                      confirmButton = {
-                          Button(onClick = {
-                              prefs.edit().putString("gemini_api_key", apiKey.trim()).apply()
-                              showSettings = false
-                              Toast.makeText(context, "API Key Saved!", Toast.LENGTH_SHORT).show()
-                          }) { Text("Save") }
-                      }
-                  )
+                      )
+                  }
+
+                  if (showSettings) {
+                      AlertDialog(
+                          onDismissRequest = { showSettings = false },
+                          title = { Text("Gemini API Key") },
+                          text = {
+                              Column {
+                                  Text("Google AI Studio থেকে নেওয়া ফ্রি API Key পেস্ট করুন:", fontSize = 13.sp)
+                                  Spacer(Modifier.height(8.dp))
+                                  OutlinedTextField(
+                                      value = apiKey,
+                                      onValueChange = { apiKey = it },
+                                      placeholder = { Text("AIzaSy...") },
+                                      singleLine = true
+                                  )
+                              }
+                          },
+                          confirmButton = {
+                              Button(onClick = {
+                                  prefs.edit().putString("gemini_api_key", apiKey.trim()).apply()
+                                  showSettings = false
+                                  Toast.makeText(context, "API Key Saved!", Toast.LENGTH_SHORT).show()
+                              }) { Text("Save") }
+                          }
+                      )
+                  }
               }
           }
 
@@ -789,62 +899,67 @@ jobs:
           }
 
           suspend fun convertVoiceToMath(apiKey: String, spoken: String): Pair<String, String?> = withContext(Dispatchers.IO) {
-              try {
-                  val normalizedSpoken = normalizeBengaliDigits(spoken)
-                  val url = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey")
-                  val conn = (url.openConnection() as HttpURLConnection).apply {
-                      requestMethod = "POST"
-                      setRequestProperty("Content-Type", "application/json")
-                      connectTimeout = 10000
-                      readTimeout = 10000
-                      doOutput = true
+              val modelsToTry = listOf("gemini-2.5-flash-lite", "gemini-3-flash-preview", "gemini-2.0-flash")
+              val normalizedSpoken = normalizeBengaliDigits(spoken)
+              var lastError = "API Error"
+
+              for (model in modelsToTry) {
+                  try {
+                      val url = URL("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey")
+                      val conn = (url.openConnection() as HttpURLConnection).apply {
+                          requestMethod = "POST"
+                          setRequestProperty("Content-Type", "application/json")
+                          connectTimeout = 10000
+                          readTimeout = 10000
+                          doOutput = true
+                      }
+                      val prompt = """
+                          Convert the spoken math phrase into a pure arithmetic expression using ONLY English digits (0-9) and operators (+, -, ×, ÷, %, .).
+                          Examples:
+                          "100 যোগ 10" -> 100+10
+                          "500 বিয়োগ 50" -> 500-50
+                          "150 গুন 119" -> 150×119
+                          "1000 ভাগ 8" -> 1000÷8
+                          "200 এর 5 পার্সেন্ট" -> 200×5%
+                          Output ONLY the math expression with no spaces, no explanation, no markdown.
+                          Spoken text: "$normalizedSpoken"
+                      """.trimIndent()
+
+                      val body = JSONObject().apply {
+                          put("contents", JSONArray().put(JSONObject().apply {
+                              put("parts", JSONArray().put(JSONObject().put("text", prompt)))
+                          }))
+                      }
+                      conn.outputStream.use { it.write(body.toString().toByteArray()) }
+
+                      val code = conn.responseCode
+                      if (code in 200..299) {
+                          val response = JSONObject(conn.inputStream.bufferedReader().readText())
+                          val rawExpr = response.getJSONArray("candidates")
+                              .getJSONObject(0)
+                              .getJSONObject("content")
+                              .getJSONArray("parts")
+                              .getJSONObject(0)
+                              .getString("text")
+
+                          val cleanExpr = normalizeBengaliDigits(rawExpr)
+                              .replace("*", "×")
+                              .replace("/", "÷")
+                              .replace(" ", "")
+                              .filter { it in "0123456789.+-×÷%()" }
+
+                          if (cleanExpr.isNotBlank()) return@withContext Pair(cleanExpr, null)
+                      } else {
+                          val errBody = conn.errorStream?.bufferedReader()?.readText() ?: "HTTP $code"
+                          lastError = try {
+                              JSONObject(errBody).getJSONObject("error").getString("message")
+                          } catch (_: Exception) { "API Error ($code)" }
+                      }
+                  } catch (e: Exception) {
+                      lastError = "Network Error: ${e.localizedMessage}"
                   }
-                  val prompt = """
-                      Convert the spoken math phrase into a pure arithmetic expression using ONLY English digits (0-9) and operators (+, -, ×, ÷, %, .).
-                      Examples:
-                      "100 যোগ 10" -> 100+10
-                      "500 বিয়োগ 50" -> 500-50
-                      "150 গুন 119" -> 150×119
-                      "1000 ভাগ 8" -> 1000÷8
-                      "200 এর 5 পার্সেন্ট" -> 200×5%
-                      Output ONLY the math expression with no spaces, no explanation, no markdown.
-                      Spoken text: "$normalizedSpoken"
-                  """.trimIndent()
-
-                  val body = JSONObject().apply {
-                      put("contents", JSONArray().put(JSONObject().apply {
-                          put("parts", JSONArray().put(JSONObject().put("text", prompt)))
-                      }))
-                  }
-                  conn.outputStream.use { it.write(body.toString().toByteArray()) }
-
-                  val code = conn.responseCode
-                  if (code !in 200..299) {
-                      val errBody = conn.errorStream?.bufferedReader()?.readText() ?: "HTTP $code"
-                      val msg = try {
-                          JSONObject(errBody).getJSONObject("error").getString("message")
-                      } catch (_: Exception) { "API Error ($code)" }
-                      return@withContext Pair("", msg)
-                  }
-
-                  val response = JSONObject(conn.inputStream.bufferedReader().readText())
-                  val rawExpr = response.getJSONArray("candidates")
-                      .getJSONObject(0)
-                      .getJSONObject("content")
-                      .getJSONArray("parts")
-                      .getJSONObject(0)
-                      .getString("text")
-
-                  val cleanExpr = normalizeBengaliDigits(rawExpr)
-                      .replace("*", "×")
-                      .replace("/", "÷")
-                      .replace(" ", "")
-                      .filter { it in "0123456789.+-×÷%" }
-
-                  Pair(cleanExpr, null)
-              } catch (e: Exception) {
-                  Pair("", "Network/API Error: ${e.localizedMessage}")
               }
+              Pair("", lastError)
           }
           EOF
 
@@ -865,5 +980,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: MultiCalc-Pro-v3
+          name: MultiCalc-Ultra-v4
           path: app/build/outputs/apk/debug/app-debug.apk
